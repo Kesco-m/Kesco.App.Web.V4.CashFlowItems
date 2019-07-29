@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Web;
 using Kesco.Lib.BaseExtention;
 using Kesco.Lib.BaseExtention.Enums.Controls;
-using Kesco.Lib.Entities.Resources;
+using Kesco.Lib.Entities;
+using Kesco.Lib.Entities.CashFlow;
 using Kesco.Lib.Log;
 using Kesco.Lib.Web.Controls.V4;
 using Kesco.Lib.Web.Controls.V4.Common;
@@ -19,7 +22,6 @@ namespace Kesco.App.Web.CashFlowItems
     {
         protected CashFlowType cft;
         protected string id;
-        protected string idDoc;
         protected string idParentPage;
         protected bool IsParentUpdate = true;
 
@@ -27,6 +29,10 @@ namespace Kesco.App.Web.CashFlowItems
         ///     Задание ссылки на справку
         /// </summary>
         public override string HelpUrl { get; set; }
+
+        protected override void EntityInitialization(Entity copy = null)
+        {
+        }
 
         /// <summary>
         ///     Событие загрузки страницы
@@ -93,7 +99,7 @@ namespace Kesco.App.Web.CashFlowItems
             {
                 try
                 {
-                    ClearMenuButtons();
+                    //ClearMenuButtons();
                     SetMenuButtons();
                     RenderButtons(w);
                 }
@@ -113,34 +119,24 @@ namespace Kesco.App.Web.CashFlowItems
         /// </summary>
         private void SetMenuButtons()
         {
-            var btnAdd = new Button
-            {
-                ID = "btnSave",
-                V4Page = this,
-                Text = Resx.GetString("cmdSave") + "&nbsp;(F2)",
-                Title = Resx.GetString("cmdSave"),
-                Width = 125,
-                IconJQueryUI = ButtonIconsEnum.Save,
-                OnClick = "cmd('cmd', 'SaveData');"
-            };
+            var btnReCheck = MenuButtons.Single(btn => btn.ID == "btnReCheck");
+            RemoveMenuButton(btnReCheck);
 
-            var btnRefresh = new Button
-            {
-                ID = "btnRefresh",
-                V4Page = this,
-                Text = Resx.GetString("cmdRefresh"),
-                Title = Resx.GetString("cmdRefreshTitle"),
-                IconJQueryUI = ButtonIconsEnum.Refresh,
-                Width = 105,
-                OnClick = "cmd('cmd', 'RefreshData');"
-            };
+            var btnEdit = MenuButtons.Single(btn => btn.ID == "btnEdit");
+            RemoveMenuButton(btnEdit);
+
+            var btnSave = MenuButtons.Single(btn => btn.ID == "btnSave");
+            btnSave.Title = Resx.GetString("Cfi_lblOkTooltipCft");
+
+            var btnApply = MenuButtons.Single(btn => btn.ID == "btnApply");
+            btnApply.Title = Resx.GetString("Cfi_lblSaveTooltipCft");
 
             var btnDelete = new Button
             {
                 ID = "btnDelete",
                 V4Page = this,
                 Text = Resx.GetString("cmdDelete"),
-                Title = Resx.GetString("cmdDeleteTitle"),
+                Title = Resx.GetString("Cfi_lblDeleteTooltipCft"),
                 IconJQueryUI = ButtonIconsEnum.Delete,
                 Width = 105,
                 OnClick = string.Format("v4_showConfirm('{0}','{1}','{2}','{3}','{4}', null);",
@@ -148,31 +144,11 @@ namespace Kesco.App.Web.CashFlowItems
                     Resx.GetString("errDoisserWarrning"),
                     Resx.GetString("CONFIRM_StdCaptionYes"),
                     Resx.GetString("CONFIRM_StdCaptionNo"),
-                    string.Format("cmd({0});", HttpUtility.JavaScriptStringEncode("'cmd', 'DeleteData'"))
+                    string.Format("cmd({0});", HttpUtility.JavaScriptStringEncode("'cmd', 'Delete'"))
                 )
             };
 
-            var btnClose = new Button
-            {
-                ID = "btnClose",
-                V4Page = this,
-                Text = Resx.GetString("cmdClose"),
-                Title = Resx.GetString("cmdCloseTitleApp"),
-                IconJQueryUI = ButtonIconsEnum.Close,
-                Width = 105,
-                OnClick = IsParentUpdate ? "parent.Records_Close(idp, null);" : "window.close();"
-            };
-
-            if (!cft.Id.IsNullEmptyOrZero())
-            {
-                Button[] buttons = {btnAdd, btnRefresh, btnDelete, btnClose};
-                AddMenuButton(buttons);
-            }
-            else
-            {
-                Button[] buttons = {btnAdd, btnRefresh, btnClose};
-                AddMenuButton(buttons);
-            }
+            if (!cft.Id.IsNullEmptyOrZero()) AddMenuButton(btnDelete);
         }
 
         /// <summary>
@@ -221,57 +197,58 @@ namespace Kesco.App.Web.CashFlowItems
         {
             switch (cmd)
             {
-                case "RefreshData":
-                    JS.Write("$('#btnRefresh').attr('disabled', 'disabled');Wait.render(true);");
-                    JS.Write(
-                        "setTimeout(function(){{$('#btnRefresh').removeAttr('disabled'); Wait.render(false);}}, 2000);");
-                    RefreshData();
+                case "Save":
+                    SaveData(true);
                     break;
-                case "SaveData":
-                    SaveData();
+                case "Apply":
+                    SaveData(false);
                     break;
-                case "DeleteData":
+                case "Delete":
                     DeleteData();
                     break;
+                default:
+                    base.ProcessCommand(cmd, param);
+                    break;
             }
         }
 
         /// <summary>
-        ///     Кнопка: Сохранить
+        ///     Кнопка: OK / Сохранить
         /// </summary>
-        private void SaveData()
+        private void SaveData(bool needCloseForm)
         {
-            if (Validation())
+            if (!Validation())
+                return;
+
+            if (cft.IsModified)
             {
-                var reloadParentForm = true;
                 var isNew = !efId.IsReadOnly;
                 cft.Save(isNew);
-                if (IsParentUpdate)
-                    JS.Write("parent.Records_Save('','{0}','{1}');", reloadParentForm, isNew);
-                else
-                    JS.Write("window.close();");
+
+                JS.Write("if (parent.RefreshData) {{ parent.RefreshData({0}); }}", isNew ? "true" : "false");
+
+                if (!needCloseForm)
+                {
+                    if (isNew)
+                        SetCurrentUrlParams(new Dictionary<string, object> {{"id", cft.Id}});
+                    RefreshPage();
+                }
             }
+
+            if (needCloseForm)
+                JS.Write(
+                    "parent.cashFlow_RecordsAdd ? parent.CloseDialog(parent.cashFlow_RecordsAdd.form, null, 0) : v4_closeWindow();");
         }
 
         /// <summary>
-        ///     Обновление данных формы из объекта
-        /// </summary>
-        private void RefreshData()
-        {
-            ClearCacheObjects();
-            RefreshNtf();
-        }
-
-        /// <summary>
-        ///     Очистка всех данных формы
+        ///     Кнопка: Удалить
         /// </summary>
         private void DeleteData()
         {
             cft.Delete();
-            if (IsParentUpdate)
-                JS.Write("parent.Records_Save();");
-            else
-                JS.Write("window.close();");
+            JS.Write("if (parent.RefreshData) {{ parent.RefreshData(false); }}");
+            JS.Write(
+                "parent.cashFlow_RecordsAdd ? parent.CloseDialog(parent.cashFlow_RecordsAdd.form, null, 0) : v4_closeWindow();");
         }
     }
 }

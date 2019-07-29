@@ -4,9 +4,8 @@
 }
 
 #divContainer {
-    margin-top:10px;
-    margin-left:11px;
-    margin-right:11px;
+    margin-left: 11px;
+    margin-right: 11px;
 }
 
 #divMyTreeContainer {
@@ -17,85 +16,79 @@
     max-width:100%;
 */
 }
-         
-#divCashFlowItemData {  
-    padding-left:10px;
-    overflow:auto;
+
+#divCashFlowItemData {
+    overflow: auto;
+    padding-left: 10px;
 }
-         
+
 /*++++++++++++++++++++++++++++++++++++++++++++++++++*/
-#divCashFlowItemInfo 
-{
-    margin-bottom: 10px;
+
+#divCashFlowItemInfo {
     font-weight: bold;
+    margin-bottom: 10px;
 }
-            
-.marginT {
-    margin-top: 10px;
-}
-           
-div.label
-{
-    width: 100px;
+
+.marginT { margin-top: 10px; }
+
+div.label {
     display: inline-block;
     vertical-align: middle;
-}
-           
-div.predicate_block
-{
-    min-height: 20px;
-    display: block;
-    margin-top:5px;
-}
-           
-div.predicate_menu_block
-{
-    min-height: 20px;
-    display: block;
+    width: 100px;
 }
 
-div.area_block
-{
+div.predicate_block {
+    display: block;
+    margin-top: 5px;
+    min-height: 20px;
+}
+
+div.predicate_menu_block {
+    display: block;
+    min-height: 20px;
+}
+
+div.area_block {
+    display: block;
+    margin-top: 5px;
     min-height: 60px;
-    display: block;
-    margin-top:5px;
     vertical-align: middle;
-}          
+}
 
-div.aligned_control
-{
+div.aligned_control {
+    margin-right: 0px;
     vertical-align: middle;
-    margin-right:0px;
-}             
+}
 
 div.header {
-	background: #e9e9e9; 
-	border-top: solid #d4d0c8 1px; 
-	border-left: solid #d4d0c8 1px; 
-	border-bottom: solid #d4d0c8 1px; 
-	border-right: solid #d4d0c8 1px;  
-	padding: 1px;  
-	top: 0px; 
-	left: 0px; 
+    background: #e9e9e9;
+    border-bottom: solid #d4d0c8 1px;
+    border-left: solid #d4d0c8 1px;
+    border-right: solid #d4d0c8 1px;
+    border-top: solid #d4d0c8 1px;
+    left: 0px;
+    padding: 1px;
+    top: 0px;
 }
 
 /*Класс определят отступ слева*/
-.marginL 
-{
-     margin-left: 10px;
-     margin-top: 15px;
+
+.marginL {
+    margin-left: 10px;
+    margin-top: 15px;
 }
 
-.marginD 
-{
-     margin-left: 3px;
-}
+.marginD { margin-left: 3px; }
 
 .footer {
-    width:100%;
-    position:absolute;
-    bottom:5px;
-    left:0;
+    bottom: 5px;
     font-size: 7pt;
+    left: 0;
     margin-top: 7px;
+    position: absolute;
+    width: 100%;
+}
+
+a:hover {
+    cursor:pointer;
 }

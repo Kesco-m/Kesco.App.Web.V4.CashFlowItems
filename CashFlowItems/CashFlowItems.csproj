@@ -20,6 +20,11 @@
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <OldToolsVersion>4.0</OldToolsVersion>
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -57,22 +62,28 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Global.asax" />
     <Content Include="hlp\default.htm" />
     <Content Include="hlp\help.htm" />
     <Content Include="hlp\index.htm" />
     <Content Include="hlp\script.js" />
+    <Content Include="Kesco.CashFlowItems.js" />
     <Content Include="Search.aspx" />
     <Content Include="CashFlowTypeForm.aspx" />
-    <Content Include="Global.asax" />
     <Content Include="Kesco.CashFlowItems.css" />
     <Content Include="Kesco.Search.js" />
     <Content Include="CashFlowTypeList.aspx" />
     <Content Include="hlp\style.css" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Kesco.CashFlowTypeList.js" />
     <Content Include="CashFlowItemForm.aspx" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Global.asax.cs">
+      <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
     <Compile Include="Search.aspx.cs">
       <DependentUpon>Search.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -89,9 +100,6 @@
     </Compile>
     <Compile Include="CashFlowTypeForm.aspx.designer.cs">
       <DependentUpon>CashFlowTypeForm.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Global.asax.cs">
-      <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CashFlowTypeList.aspx.cs">
@@ -156,6 +164,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="hlp\Contents\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

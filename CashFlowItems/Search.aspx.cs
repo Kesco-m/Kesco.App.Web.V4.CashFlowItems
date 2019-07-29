@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Specialized;
-using System.IO;
 using Kesco.Lib.BaseExtention;
 using Kesco.Lib.BaseExtention.Enums.Controls;
-using Kesco.Lib.Entities.CashFlowItem;
-using Kesco.Lib.Log;
+using Kesco.Lib.Entities;
+using Kesco.Lib.Entities.CashFlow;
 using Kesco.Lib.Web.Controls.V4;
 using Kesco.Lib.Web.Controls.V4.Common;
+using Kesco.Lib.Web.Controls.V4.TreeView;
 using Kesco.Lib.Web.Settings;
 
 namespace Kesco.App.Web.CashFlowItems
@@ -14,12 +14,8 @@ namespace Kesco.App.Web.CashFlowItems
     /// <summary>
     ///     Класс объекта страницы
     /// </summary>
-    public partial class Search : EntityPage
+    public partial class Search : Page
     {
-        // Идентификатор записи
-        protected int CashFlowItemId;
-        private int _loadById;
-
         /// <summary>
         ///     Конструктор по умолчанию
         /// </summary>
@@ -29,54 +25,9 @@ namespace Kesco.App.Web.CashFlowItems
         }
 
         /// <summary>
-        ///     Задание ссылки на справку
+        ///     Ссылка на справку
         /// </summary>
         public override string HelpUrl { get; set; }
-
-        /// <summary>
-        ///     Формирует основыной функционал страницы: подписи, меню, заголовок, title
-        /// </summary>
-        protected string RenderDocumentHeader()
-        {
-            using (var w = new StringWriter())
-            {
-                try
-                {
-                    ClearMenuButtons();
-                    if (ReturnId.IsNullEmptyOrZero())
-                        SetMenuButtons();
-                    RenderButtons(w);
-                }
-                catch (Exception e)
-                {
-                    var dex = new DetailedException(Resx.GetString("TTN_errFailedGenerateButtons") + ": " + e.Message,
-                        e);
-                    Logger.WriteEx(dex);
-                    throw dex;
-                }
-
-                return w.ToString();
-            }
-        }
-
-        /// <summary>
-        ///     Инициализация/создание кнопок меню
-        /// </summary>
-        private void SetMenuButtons()
-        {
-            var btnCashFlowType = new Button
-            {
-                ID = "btnCashFlowType",
-                V4Page = this,
-                Text = Resx.GetString("Cfi_lblModesMovement"), //Виды Движения
-                Title = Resx.GetString("Cfi_lblModesMovement"),
-                IconJQueryUI = ButtonIconsEnum.FolderOpen,
-                OnClick = "cmd('cmd', 'CashFlowType')"
-            };
-
-            var buttons = new[] {btnCashFlowType};
-            AddMenuButton(buttons);
-        }
 
         /// <summary>
         ///     Событие пред-загрузки страницы
@@ -87,32 +38,40 @@ namespace Kesco.App.Web.CashFlowItems
         {
             tvCashFlowItem.SetJsonData("SearchData.ashx");
             tvCashFlowItem.SetService("AddCashFlowItem", "EditCashFlowItem", "DeleteCashFlowItem");
-            tvCashFlowItem.SetDataSource("Справочники.dbo.СтатьиДвиженияДенежныхСредств",
-                "СтатьиДвиженияДенежныхСредств", Config.DS_resource, "КодСтатьиДвиженияДенежныхСредств",
-                "СтатьяДвиженияДенежныхСредств", "");
 
+            tvCashFlowItem.DbSourceSettings = new TreeViewDbSourceSettings
+            {
+                ConnectionString = Config.DS_person,
+                TableName = "СтатьиДвиженияДенежныхСредств",
+                ViewName = "СтатьиДвиженияДенежныхСредств",
+                PkField = "КодСтатьиДвиженияДенежныхСредств",
+                NameField = "СтатьяДвиженияДенежныхСредств",
+                ModifyUserField = "Изменил",
+                ModifyDateField = "Изменено",
+                RootName = "Статьи движения денежных средств"
+            };
+
+            tvCashFlowItem.IsOrderMenu = true;
             tvCashFlowItem.IsLoadData = false;
+            tvCashFlowItem.Resizable = false;
             tvCashFlowItem.IsSaveState = true;
             tvCashFlowItem.IsSearchMenu = true;
-
             tvCashFlowItem.ParamName = "CfiTreeState";
             tvCashFlowItem.ClId = ClId;
-
-            tvCashFlowItem.IsContextMenu = true;
+            tvCashFlowItem.IsEditableInDialog = false;
             tvCashFlowItem.ContextMenuAdd = true;
             tvCashFlowItem.ContextMenuRename = true;
             tvCashFlowItem.ContextMenuDelete = true;
-            tvCashFlowItem.IsOrderMenu = true;
-            tvCashFlowItem.Resizable = false;
+            tvCashFlowItem.ShowTopNodesInSearchResult = false;
+            tvCashFlowItem.HelpButtonVisible = true;
+            tvCashFlowItem.AddFormTitle = string.Format("{0} {1}", Resx.GetString("lblAddition"),
+                Resx.GetString("Cfi_msgCashFlowArticles"));
+            tvCashFlowItem.EditFormTitle = string.Format("{0} {1}", Resx.GetString("lblEdit"),
+                Resx.GetString("Cfi_msgCashFlowArticles"));
 
             IsSilverLight = false;
 
-            if (!Request.QueryString["id"].IsNullEmptyOrZero())
-                int.TryParse(Request.QueryString["id"], out _loadById);
-            else if (!Request.QueryString["idloc"].IsNullEmptyOrZero())
-                int.TryParse(Request.QueryString["idloc"], out _loadById);
-            if (_loadById != 0)
-                tvCashFlowItem.LoadById = _loadById;
+            SetMenuButtons();
         }
 
         /// <summary>
@@ -122,18 +81,21 @@ namespace Kesco.App.Web.CashFlowItems
         /// <param name="e">Аргументы</param>
         protected void Page_Load(object sender, EventArgs e)
         {
-            JS.Write(@"cashflowitem = {{
-                editaction:""{0}"",
-                addaction:""{1}"",
-                title:""{2}""
-            }};",
-                Resx.GetString("lblEdit"),
-                Resx.GetString("lblAddition"),
-                Resx.GetString("Cfi_msgCashFlowArticles")
-            );
+            var loadById = 0;
+            if (!Request.QueryString["id"].IsNullEmptyOrZero())
+                int.TryParse(Request.QueryString["id"], out loadById);
+            else if (!Request.QueryString["idloc"].IsNullEmptyOrZero())
+                int.TryParse(Request.QueryString["idloc"], out loadById);
+            if (loadById != 0)
+                tvCashFlowItem.LoadById = loadById;
 
-            IsRememberWindowProperties = true;
-            WindowParameters = new WindowParameters("CFISrchWndLeft", "CFISrchWndTop", "CFISrchWidth", "CFISrchHeight");
+            JS.Write(@"cashFlowItem = {{
+                AddFormTitle:""{0}"",
+                EditFormTitle:""{1}""
+                }};",
+                tvCashFlowItem.AddFormTitle,
+                tvCashFlowItem.EditFormTitle
+            );
         }
 
         /// <summary>
@@ -146,39 +108,43 @@ namespace Kesco.App.Web.CashFlowItems
             switch (cmd)
             {
                 case "AddCashFlowItem":
-                    CashFlowItemId = int.Parse(param["Id"]);
-                    JS.Write("cashFlowItem_add({0});", CashFlowItemId);
+                    ItemId = int.Parse(param["Id"]);
+                    JS.Write("AddCashFlowItem('{0}');", ItemId);
                     break;
                 case "EditCashFlowItem":
-                    CashFlowItemId = int.Parse(param["Id"]);
-                    JS.Write("cashFlowItem_edit({0});", CashFlowItemId);
+                    ItemId = int.Parse(param["Id"]);
+                    JS.Write("EditCashFlowItem('{0}');", ItemId);
                     break;
                 case "DeleteCashFlowItem":
-                    CashFlowItemId = int.Parse(param["Id"]);
-                    var cfi = new CashFlowItem(CashFlowItemId.ToString());
-                    try
-                    {
-                        cfi.Delete();
-                        JS.Write("v4_reloadNode('{0}');", tvCashFlowItem.ClientID);
-                    }
-                    catch (Exception ex)
-                    {
-                        ShowMessage(ex.Message, Resx.GetString("alertError"));
-                    }
-                    break;
-                case "RefreshData":
-                    JS.Write("Records_Close(null, 0);");
-                    JS.Write("v4_reloadNode('{0}');", tvCashFlowItem.ClientID);
-                    break;
-                case "CashFlowType":
-                    JS.Write(
-                        "window.open('{0}','_blank','status=no,toolbar=no,menubar=no,location=no,resizable=yes,scrollbars=yes,height=560,width=1000 ');",
-                        "CashFlowTypeList.aspx");
+                    ItemId = int.Parse(param["Id"]);
+                    var entity = new CashFlowItem(ItemId.ToString());
+                    entity.Delete();
+                    JS.Write("v4_reloadParentNode('{0}', '{1}');", tvCashFlowItem.ClientID, ItemId);
                     break;
                 default:
                     base.ProcessCommand(cmd, param);
                     break;
             }
+        }
+
+        /// <summary>
+        ///     Инициализация/создание кнопок меню
+        /// </summary>
+        protected void SetMenuButtons()
+        {
+            // Виды движения
+            var btnCashFlowType = new Button
+            {
+                ID = "btnCashFlowType",
+                V4Page = this,
+                Text = Resx.GetString("Cfi_lblModesMovement"),
+                Title = Resx.GetString("Cfi_lblModesMovement"),
+                IconJQueryUI = ButtonIconsEnum.FolderOpen,
+                OnClick =
+                    "var w = window.open('CashFlowTypeList.aspx','CashFlowTypeList','status=no,toolbar=no,menubar=no,location=no,resizable=yes,scrollbars=yes,height=560,width=1000 ');w.focus();"
+            };
+
+            tvCashFlowItem.AddMenuButton(btnCashFlowType);
         }
     }
 }
