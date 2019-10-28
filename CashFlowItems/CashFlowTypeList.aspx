@@ -17,8 +17,9 @@
     <input type="hidden" name="multiReturn" value=""/>
     <input type="hidden" name="value" value=""/>
 </form>
-<div id="divContainer">
-    <csg:Grid runat="server" ID="GridCashFlowType" MarginBottom="50" ShowGroupPanel="True" ExistServiceColumn="True"/>
+<div class="marginD"><%= RenderDocumentHeader() %></div>
+<div id="divContainer" style="margin-top: 5px;">
+    <csg:Grid runat="server" ID="GridCashFlowType" MarginBottom="70" ShowGroupPanel="True" ExistServiceColumn="True"/>
 </div>
 
 <div id="divCashFlowTypeAdd" style="display: none; padding: 2px 0 0 0;">

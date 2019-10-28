@@ -4,6 +4,7 @@ using Kesco.Lib.BaseExtention;
 using Kesco.Lib.BaseExtention.Enums.Controls;
 using Kesco.Lib.Entities;
 using Kesco.Lib.Entities.CashFlow;
+using Kesco.Lib.Log;
 using Kesco.Lib.Web.Controls.V4;
 using Kesco.Lib.Web.Controls.V4.Common;
 using Kesco.Lib.Web.Controls.V4.TreeView;
@@ -56,7 +57,7 @@ namespace Kesco.App.Web.CashFlowItems
             tvCashFlowItem.Resizable = false;
             tvCashFlowItem.IsSaveState = true;
             tvCashFlowItem.IsSearchMenu = true;
-            tvCashFlowItem.ParamName = "CfiTreeState";
+            tvCashFlowItem.ParamName = "CFITreeState";
             tvCashFlowItem.ClId = ClId;
             tvCashFlowItem.IsEditableInDialog = false;
             tvCashFlowItem.ContextMenuAdd = true;
@@ -64,6 +65,7 @@ namespace Kesco.App.Web.CashFlowItems
             tvCashFlowItem.ContextMenuDelete = true;
             tvCashFlowItem.ShowTopNodesInSearchResult = false;
             tvCashFlowItem.HelpButtonVisible = true;
+            tvCashFlowItem.LikeButtonVisible = true;
             tvCashFlowItem.AddFormTitle = string.Format("{0} {1}", Resx.GetString("lblAddition"),
                 Resx.GetString("Cfi_msgCashFlowArticles"));
             tvCashFlowItem.EditFormTitle = string.Format("{0} {1}", Resx.GetString("lblEdit"),
@@ -118,7 +120,15 @@ namespace Kesco.App.Web.CashFlowItems
                 case "DeleteCashFlowItem":
                     ItemId = int.Parse(param["Id"]);
                     var entity = new CashFlowItem(ItemId.ToString());
-                    entity.Delete();
+                    try
+                    {
+                        entity.Delete();
+                    }
+                    catch (DetailedException e)
+                    {
+                        ShowMessage(e.Message, Resx.GetString("alertError"), MessageStatus.Error, "", 300, 100);
+                        return;
+                    }
                     JS.Write("v4_reloadParentNode('{0}', '{1}');", tvCashFlowItem.ClientID, ItemId);
                     break;
                 default:

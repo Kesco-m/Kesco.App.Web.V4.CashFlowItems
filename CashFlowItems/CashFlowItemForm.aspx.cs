@@ -214,7 +214,16 @@ namespace Kesco.App.Web.CashFlowItems
             if (cfi.IsModified)
             {
                 var isNew = cfi.Id.IsNullEmptyOrZero();
-                cfi.Save(isNew);
+
+                try
+                {
+                    cfi.Save(isNew);
+                }
+                catch (DetailedException e)
+                {
+                    ShowMessage(e.Message, Resx.GetString("alertError"), MessageStatus.Error, "", 300,100);
+                    return;
+                }
 
                 JS.Write("if (parent.RefreshTreeView) {{ parent.RefreshTreeView('{0}', {1}); }}", cfi.Id, isNew ? "true" : "false");
 
@@ -234,7 +243,15 @@ namespace Kesco.App.Web.CashFlowItems
         /// </summary>
         private void DeleteData()
         {
-            cfi.Delete();
+            try
+            {
+                cfi.Delete();
+            }
+            catch (DetailedException e)
+            {
+                ShowMessage(e.Message, Resx.GetString("alertError"), MessageStatus.Error, "", 300, 100);
+                return;
+            }
             JS.Write("if (parent.RefreshTreeView) {{ parent.RefreshTreeView('{0}', true); }}", cfi.Id);
             JS.Write("parent.cashFlowItem_dialogShow ? parent.CloseDialog(parent.cashFlowItem_dialogShow.form, null, 0) : v4_closeWindow();");
         }

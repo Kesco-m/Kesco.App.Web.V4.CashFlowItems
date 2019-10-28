@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
+using System.IO;
 using Kesco.Lib.BaseExtention.Enums.Controls;
 using Kesco.Lib.DALC;
 using Kesco.Lib.Entities;
 using Kesco.Lib.Entities.CashFlow;
+using Kesco.Lib.Log;
 using Kesco.Lib.Web.Controls.V4.Common;
 using Kesco.Lib.Web.Settings;
 
@@ -48,6 +50,31 @@ namespace Kesco.App.Web.CashFlowItems
 
         protected override void EntityInitialization(Entity copy = null)
         {
+        }
+
+        /// <summary>
+        ///     Отрисовка верхней панели меню
+        /// </summary>
+        /// <returns>Строка, получаемая из StringWriter</returns>
+        protected string RenderDocumentHeader()
+        {
+            using (var w = new StringWriter())
+            {
+                try
+                {
+                    ClearMenuButtons();
+                    RenderButtons(w);
+                }
+                catch (Exception e)
+                {
+                    var dex = new DetailedException(
+                        Resx.GetString("ExRate_errFailedGenerateButtons") + ": " + e.Message, e);
+                    Logger.WriteEx(dex);
+                    throw dex;
+                }
+
+                return w.ToString();
+            }
         }
 
         /// <summary>

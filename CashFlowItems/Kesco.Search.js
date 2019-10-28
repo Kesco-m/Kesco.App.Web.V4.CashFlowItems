@@ -53,7 +53,7 @@ function cashFlowItem_dialogShow(titleForm, pageId, recId, parent) {
     _parent = parent;
 
     var idContainer = "divCashFlowItemAdd";
-    var width = 451;
+    var width = 490;
     var height = 255;
 
     if (null == cashFlowItem_dialogShow.form) {

@@ -8,7 +8,6 @@
 <head runat="server">
     <title></title>
     <link rel="stylesheet" type="text/css" href="Kesco.CashFlowItems.css"/>
-    <script src="Kesco.CashFlowItemForm.js" type="text/javascript"></script>
     <script src="Kesco.CashFlowItems.js" type="text/javascript"></script>
 </head>
 <body>
